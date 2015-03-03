@@ -248,22 +248,39 @@ namespace ICSharpCode.AvalonEdit.Editing
 				TextArea textArea = GetTextArea(target);
 				if (textArea != null && textArea.Document != null) {
 					if (textArea.Selection.IsEmpty) {
-						TextViewPosition startPos = textArea.Caret.Position;
-						bool enableVirtualSpace = textArea.Options.EnableVirtualSpace;
-						// When pressing delete; don't move the caret further into virtual space - instead delete the newline
-						if (caretMovement == CaretMovementType.CharRight)
-							enableVirtualSpace = false;
-						double desiredXPos = textArea.Caret.DesiredXPos;
-						TextViewPosition endPos = CaretNavigationCommandHandler.GetNewCaretPosition(
-							textArea.TextView, startPos, caretMovement, enableVirtualSpace, ref desiredXPos);
-						// GetNewCaretPosition may return (0,0) as new position,
-						// thus we need to validate endPos before using it in the selection.
-						if (endPos.Line < 1 || endPos.Column < 1)
-							endPos = new TextViewPosition(Math.Max(endPos.Line, 1), Math.Max(endPos.Column, 1));
-						// Don't select the text to be deleted; just reuse the ReplaceSelectionWithText logic
-						var sel = new SimpleSelection(textArea, startPos, endPos);
-						sel.ReplaceSelectionWithText(string.Empty);
-					} else {
+				      RectangleSelection rectangleSelection = textArea.Selection as RectangleSelection;
+                     
+				      if(rectangleSelection!=null && caretMovement != CaretMovementType.CharRight)
+				      {
+				         textArea.Selection = new RectangleSelection(textArea, rectangleSelection.EndPosition,
+				                                                     new TextViewPosition(rectangleSelection.StartPosition.Line, rectangleSelection.StartPosition.Column + 1));				         
+				         textArea.RemoveSelectedText();
+				      }
+				      else if(rectangleSelection!=null && rectangleSelection.StartPosition.Column > 1 && caretMovement == CaretMovementType.Backspace)
+				      {
+				         textArea.Selection = new RectangleSelection(textArea, new TextViewPosition(rectangleSelection.StartPosition.Line, rectangleSelection.StartPosition.Column - 1), 
+   				                                                  rectangleSelection.EndPosition);				         
+				         textArea.RemoveSelectedText();
+				      }
+                  else
+                  {
+                     TextViewPosition startPos = textArea.Caret.Position;
+                     bool enableVirtualSpace = textArea.Options.EnableVirtualSpace;
+                     // When pressing delete; don't move the caret further into virtual space - instead delete the newline
+                     if (caretMovement == CaretMovementType.CharRight)
+                        enableVirtualSpace = false;
+                     double desiredXPos = textArea.Caret.DesiredXPos;
+                     TextViewPosition endPos = CaretNavigationCommandHandler.GetNewCaretPosition(
+                                               textArea.TextView, startPos, caretMovement, enableVirtualSpace, ref desiredXPos);
+                     // GetNewCaretPosition may return (0,0) as new position,
+                     // thus we need to validate endPos before using it in the selection.
+                     if (endPos.Line < 1 || endPos.Column < 1)
+                        endPos = new TextViewPosition(Math.Max(endPos.Line, 1), Math.Max(endPos.Column, 1));
+                     // Don't select the text to be deleted; just reuse the ReplaceSelectionWithText logic
+                     var sel = new SimpleSelection(textArea, startPos, endPos);
+                     sel.ReplaceSelectionWithText(string.Empty);
+                  }
+               } else {
 						textArea.RemoveSelectedText();
 					}
 					textArea.Caret.BringCaretToView();
