@@ -7,7 +7,7 @@
 		<DataTemplate x:Key="comboBoxItemTemplate">
 			<StackPanel Orientation="Horizontal">
 				<Image Source="{Binding Image}" Width="16" Height="16" Margin="0,-1,2,-1"/>
-				<TextBlock Text="{Binding Text}" Name="textBlock"/>
+				<TextBlock Text="{Binding Text}" Name="textBlock" Foreground="{Binding ForeColor}" FontStyle="{Binding FontStyle}"  FontWeight="{Binding FontWeight}" TextDecorations="{Binding Underline}" />
 			</StackPanel>
 			<DataTemplate.Triggers>
 				<DataTrigger Binding="{Binding IsInSamePart}" Value="False">

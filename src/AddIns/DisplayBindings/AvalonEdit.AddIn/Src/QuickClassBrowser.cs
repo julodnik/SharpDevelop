@@ -18,6 +18,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.CodeCompletion;
@@ -63,7 +65,13 @@ namespace ICSharpCode.AvalonEdit.AddIn
 					this.text = typeDef.Name;
 				}
 				this.image = CompletionImage.GetImage(typeDef);
-			}
+            ForeColor = System.Windows.SystemColors.WindowTextBrush;
+            FontStyle = FontStyles.Normal;
+            FontWeight =  FontWeights.Normal;
+            Underline = null;				
+         }
+			
+         private static System.Windows.Media.Brush PropertyBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 233, 59, 255));
 			
 			public EntityItem(IMember member, IAmbience ambience)
 			{
@@ -72,6 +80,10 @@ namespace ICSharpCode.AvalonEdit.AddIn
 				ambience.ConversionFlags = ConversionFlags.ShowTypeParameterList | ConversionFlags.ShowParameterList | ConversionFlags.ShowParameterNames;
 				text = ambience.ConvertSymbol(member);
 				image = CompletionImage.GetImage(member);
+            ForeColor = member.SymbolKind == SymbolKind.Property ? PropertyBrush : System.Windows.SystemColors.WindowTextBrush;
+            FontStyle = member.SymbolKind == SymbolKind.Property ? FontStyles.Italic : FontStyles.Normal;
+            FontWeight =  member.SymbolKind == SymbolKind.Property || member.Accessibility == Accessibility.Public ? FontWeights.Bold : FontWeights.Normal;
+            Underline = member.SymbolKind == SymbolKind.Field ? System.Windows.TextDecorations.Underline : null;
 			}
 			
 			/// <summary>
@@ -88,6 +100,26 @@ namespace ICSharpCode.AvalonEdit.AddIn
 				get {
 					return image;
 				}
+			}
+			
+			public System.Windows.Media.Brush ForeColor {
+            get;
+            private set;
+         }
+			
+			public System.Windows.FontStyle FontStyle {
+            get;
+            private set;
+			}
+			
+			public System.Windows.FontWeight FontWeight {
+            get;
+            private set;
+			}
+			
+			public System.Windows.TextDecorationCollection Underline {
+            get;
+            private set;
 			}
 			
 			/// <summary>
