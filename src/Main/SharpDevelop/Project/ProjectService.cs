@@ -202,8 +202,25 @@ namespace ICSharpCode.SharpDevelop.Project
 		
 		void OnSolutionOpened(ISolution solution)
 		{
-			foreach (var project in solution.Projects)
-				project.ProjectLoaded();
+         int projectsToLoad = solution.Projects.Count;
+         foreach (var project in solution.Projects)
+         {
+            project.ProjectLoaded();
+            if(project is AbstractProject)
+            {
+               (project as AbstractProject).AllFilesOpened += delegate {
+                  projectsToLoad--;
+                  if(projectsToLoad == 0)
+                  {
+                     string activateFile = solution.Preferences.Get("ActiveWindow", "").ToString();
+                     if (!string.IsNullOrWhiteSpace(activateFile))
+                     {
+                        SD.FileService.OpenFile(new FileName(activateFile), true);
+                     }
+                  }
+               };
+            }
+         }
 			SolutionOpened(this, new SolutionEventArgs(solution));
 			SD.FileService.RecentOpen.AddRecentProject(solution.FileName);
 			Project.Converter.UpgradeViewContent.ShowIfRequired(solution);
@@ -214,12 +231,7 @@ namespace ICSharpCode.SharpDevelop.Project
 					break; // show at most 1 dialog
 				}
 			}
-			
-         string activateFile = solution.Preferences.Get("ActiveWindow", "").ToString();
-         if(!string.IsNullOrWhiteSpace(activateFile))
-         {
-            SD.FileService.OpenFile(new FileName(activateFile), true);
-         }
+
 		}
 		
 		void OpenProjectInternal(FileName fileName)

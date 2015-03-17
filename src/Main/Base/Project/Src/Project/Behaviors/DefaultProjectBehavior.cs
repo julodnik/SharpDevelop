@@ -128,7 +128,8 @@ namespace ICSharpCode.SharpDevelop.Project
 						foreach (string file in filesToOpen)
 							FileService.OpenFile(file);
 						NavigationService.ResumeLogging();
-					}));
+                  Project.FireAllFilesOpened(this, null);
+				   }));
 		}
 	}
 }

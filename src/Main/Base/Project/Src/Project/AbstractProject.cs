@@ -74,7 +74,13 @@ namespace ICSharpCode.SharpDevelop.Project
 		}
 		
 		public event EventHandler Disposed;
-		
+      public event EventHandler AllFilesOpened;
+
+      public void FireAllFilesOpened(DefaultProjectBehavior b, EventArgs o)
+      {
+         if (AllFilesOpened!=null)
+            AllFilesOpened(b, o);
+      }
 		public virtual void Dispose()
 		{
 			SD.MainThread.VerifyAccess();
