@@ -481,6 +481,7 @@ namespace ICSharpCode.SharpDevelop.Project
 		public void StoreViewState(Properties memento)
 		{
 			memento.Set("ProjectBrowserState", TreeViewHelper.GetViewStateString(treeView));
+         memento.Set("ActiveWindow", SD.Workbench.ActiveWorkbenchWindow.ActiveViewContent.Files[0].FileName);
 		}
 		
 		/// <summary>

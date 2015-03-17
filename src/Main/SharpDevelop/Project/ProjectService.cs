@@ -214,6 +214,12 @@ namespace ICSharpCode.SharpDevelop.Project
 					break; // show at most 1 dialog
 				}
 			}
+			
+         string activateFile = solution.Preferences.Get("ActiveWindow", "").ToString();
+         if(!string.IsNullOrWhiteSpace(activateFile))
+         {
+            SD.FileService.OpenFile(new FileName(activateFile), true);
+         }
 		}
 		
 		void OpenProjectInternal(FileName fileName)
