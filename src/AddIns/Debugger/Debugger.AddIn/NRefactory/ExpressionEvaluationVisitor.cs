@@ -123,6 +123,11 @@ namespace Debugger.AddIn
 			return Visit((dynamic)result);
 		}
 		
+		Value Visit(CSharpResolver.DebugVarResolveResult res)
+		{
+         return Eval.CreateValue(evalThread, res.GetValue(), res.GetVType());
+		}
+		
 		Value Visit(ResolveResult result)
 		{
 			if (result is ErrorResolveResult) {
@@ -243,6 +248,13 @@ namespace Debugger.AddIn
 			if ((bool)condition.PrimitiveValue)
 				return Convert(result.Operands[1]);
 			return Convert(result.Operands[2]);
+		}
+		
+		Value VisitAssignment(CSharpResolver.DebugVarResolveResult lhs, ResolveResult rhs)
+		{
+		   var value = Convert(rhs);
+         lhs.SetValue(value.Type, value.PrimitiveValue);
+         return value;
 		}
 		
 		Value VisitAssignment(ResolveResult lhs, ResolveResult rhs)

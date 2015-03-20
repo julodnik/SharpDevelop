@@ -181,7 +181,22 @@ namespace ICSharpCode.SharpDevelop.Gui
 						console.CommandText = this.history[this.historyPointer];
 					console.editor.ScrollToEnd();
 					return true;
-				case Key.Return:
+            case Key.Escape:
+               console.CommandText = "";
+               return true;
+            case Key.Home:
+               {
+                  TextEditor.Caret.Column = 1;
+					   
+                  int count = 2;
+                  while (!console.readOnlyRegion.CanInsert(TextEditor.Caret.Offset) && count > 0)
+                  {
+                     count--;
+                     TextEditor.Caret.Offset++;
+                  }
+                  return true;
+               }
+            case Key.Return:
 					if (Keyboard.Modifiers == ModifierKeys.Shift)
 						return false;
 					int caretOffset = this.console.TextEditor.Caret.Offset;

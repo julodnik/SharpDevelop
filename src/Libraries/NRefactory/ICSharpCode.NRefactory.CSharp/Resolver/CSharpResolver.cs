@@ -1405,6 +1405,137 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 				isInvocationTarget ? NameLookupMode.InvocationTarget : NameLookupMode.Expression);
 		}
 		
+      class SimpleVariable : IVariable
+      {
+         readonly IType type;
+         readonly string name;
+			
+         public SimpleVariable(IType type, string name)
+         {
+            Debug.Assert(type != null);
+            Debug.Assert(name != null);
+            this.type = type;
+            this.name = name;
+         }
+			
+         public SymbolKind SymbolKind
+         {
+            get { return SymbolKind.Variable; }
+         }
+			
+         public string Name
+         {
+            get { return name; }
+         }
+			
+         public DomRegion Region
+         {
+            get { return DomRegion.Empty; }
+         }
+			
+         public IType Type
+         {
+            get { return type; }
+         }
+			
+         public virtual bool IsConst
+         {
+            get { return false; }
+         }
+			
+         public virtual object ConstantValue
+         {
+            get { return null; }
+         }
+			
+         public override string ToString()
+         {
+            return type.ToString() + " " + name + ";";
+         }
+
+         public ISymbolReference ToReference()
+         {
+            return new VariableReference(type.ToTypeReference(), name, Region, IsConst, ConstantValue);
+         }
+      }
+      
+      /// <summary>
+      /// Represents a local variable or parameter.
+      /// </summary>
+      public class DebugVarResolveResult : ResolveResult
+      {
+         readonly IVariable variable;
+		
+         public DebugVarResolveResult(IVariable variable)
+            : base(UnpackTypeIfByRefParameter(variable))
+         {
+            this.variable = variable;
+         }
+		
+         static IType UnpackTypeIfByRefParameter(IVariable variable)
+         {
+            if (variable == null)
+               throw new ArgumentNullException("variable");
+            IType type = variable.Type;
+            if (type.Kind == TypeKind.ByReference)
+            {
+               IParameter p = variable as IParameter;
+               if (p != null && (p.IsRef || p.IsOut))
+                  return ((ByReferenceType)type).ElementType;
+            }
+            return type;
+         }
+		
+         public IVariable Variable
+         {
+            get { return variable; }
+         }
+		
+         public bool IsParameter
+         {
+            get { return variable is IParameter; }
+         }
+		
+         public override bool IsCompileTimeConstant
+         {
+            get { return variable.IsConst; }
+         }
+		
+         public override object ConstantValue
+         {
+            get { return IsParameter ? null : variable.ConstantValue; }
+         }
+		
+         public override DomRegion GetDefinitionRegion()
+         {
+            return variable.Region;
+         }
+         
+         public void SetValue(IType t,object v)
+         {
+            debugValues[variable.Name] = v;
+            debugTypes[variable.Name] = t;
+         }
+         
+         public object GetValue()
+         {
+            if (debugValues.ContainsKey(variable.Name))
+               return debugValues[variable.Name];
+            else
+               return null;
+         }
+
+         public IType GetVType()
+         {
+            if (debugTypes.ContainsKey(variable.Name))
+               return debugTypes[variable.Name];
+            else
+               return null;
+         }
+         public  static Dictionary<string,object> debugValues = new Dictionary<string, object>();
+         public  static Dictionary<string,IType> debugTypes = new Dictionary<string, IType>();
+      }
+
 		public ResolveResult LookupSimpleNameOrTypeName(string identifier, IList<IType> typeArguments, NameLookupMode lookupMode)
 		{
 			// C# 4.0 spec: §3.8 Namespace and type names; §7.6.2 Simple Names
@@ -1443,6 +1574,16 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 							return new TypeResolveResult(tp);
 					}
 				}
+				
+				if (identifier.StartsWith("_"))
+            {
+               IType varType;
+               if (!DebugVarResolveResult.debugTypes.TryGetValue(identifier, out varType))
+                  varType = Compilation.FindType(KnownTypeCode.Int32);
+               SimpleVariable tmpVar = new SimpleVariable(varType, identifier);
+               return new DebugVarResolveResult(tmpVar);
+            }
+               
 			}
 			
 			bool parameterizeResultType = !(typeArguments.Count != 0 && typeArguments.All(t => t.Kind == TypeKind.UnboundTypeArgument));

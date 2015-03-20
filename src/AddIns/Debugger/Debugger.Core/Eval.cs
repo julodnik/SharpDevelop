@@ -233,7 +233,7 @@ namespace Debugger
 			if (args.Length != method.Parameters.Count) {
 				throw new GetValueException("Invalid parameter count");
 			}
-			if (!method.IsStatic) {
+			if (!method.IsStatic && !method.IsConstructor) {
 				if (thisValue == null)
 					throw new GetValueException("'this' is null");
 				if (thisValue.IsNull)
@@ -261,11 +261,17 @@ namespace Debugger
 			
 			ICorDebugType[] genericArgs = method.GetTypeArguments();
 			
-			eval.CorEval2.CallParameterizedFunction(
-				method.ToCorFunction(),
-				(uint)genericArgs.Length, genericArgs,
-				(uint)corArgs.Count, corArgs.ToArray()
-			);
+         if (method.IsConstructor)
+            eval.CorEval2.NewParameterizedObject(method.ToCorFunction(),
+               (uint)genericArgs.Length, genericArgs,
+               (uint)corArgs.Count, corArgs.ToArray()
+            );
+         else
+            eval.CorEval2.CallParameterizedFunction(
+               method.ToCorFunction(),
+               (uint)genericArgs.Length, genericArgs,
+               (uint)corArgs.Count, corArgs.ToArray()
+            );
 		}
 		
 		public static Value CreateValue(Thread evalThread, object value, IType type = null)
